@@ -6,11 +6,12 @@ import axiosInstance from '@/config/axiosConfig'
 
 interface SliderItem {
   id: number
-  type: string
+  type: 'i' | 'v'
   file: string
   time: number
   index: number
   visible: boolean
+  file_url: string
 }
 
 export default function Hero() {
@@ -31,26 +32,11 @@ export default function Hero() {
           
           setSliderItems(visibleItems)
         }
+
+        console.log(response)
       } catch (err) {
         console.error('Error fetching slider data:', err)
-        setSliderItems([
-          {
-            id: 1,
-            type: 'i',
-            file: '/images/news4.jpg',
-            time: 5,
-            index: 1,
-            visible: true,
-          },
-          {
-            id: 2,
-            type: 'i',
-            file: '/images/news5.jpg',
-            time: 5,
-            index: 2,
-            visible: true,
-          },
-        ])
+        
       } finally {
         setLoading(false)
       }
@@ -101,6 +87,9 @@ export default function Hero() {
     return () => clearTimeout(timer)
   }, [currentIndex, currentMedia, sliderItems.length])
 
+
+  console.log(sliderItems)
+
   if (loading) {
     return (
       <section className="relative h-screen w-full overflow-hidden -mt-20 lg:-mt-24">
@@ -136,26 +125,31 @@ export default function Hero() {
               index === currentIndex && !isTransitioning ? 'opacity-100' : 'opacity-0'
             }`}
           >
-            {media.type === 'i' ? (
-              <Image
-                src={media.file}
-                alt={`Slider ${index + 1}`}
-                fill
-                className="object-cover object-center"
-                priority={index === 0}
-              />
-            ) : media.type === 'v' ? (
-              <video
-                src={media.file}
-                className="w-full h-full object-cover object-center"
-                autoPlay
-                muted
-                loop
-                playsInline
-              />
-            ) : null}
-          </div>
-        ))}
+            {media.file ? (
+              media.type === 'i' ? (
+                <Image
+                  src={`http://127.0.0.1:8000/${media.file}`}
+                  alt="Hero preview"
+                  fill
+                  className="object-cover object-center"
+                />
+              ) : (
+                <video
+                  src={`http://127.0.0.1:8000/${media.file}`}
+                  className="w-full h-full object-cover object-center"
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                />
+              )
+            ) : (
+              <div className="w-full h-full bg-gray-700 flex items-center justify-center text-white">
+                No Media
+              </div>
+            )}
+              </div>
+            ))}
         
         <div className="absolute inset-0 bg-black/40" />
       </div>

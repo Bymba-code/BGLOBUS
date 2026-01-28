@@ -13,7 +13,8 @@ interface Translation {
 
 interface SlideData {
   id: number
-  file: string
+  file: string 
+  file_url: string 
   index: number
   font: string
   color: string
@@ -40,27 +41,7 @@ export default function AccordionSlider() {
           setSlidesData(sortedSlides)
         }
       } catch (err) {
-        console.error(err)
-        setSlidesData([
-          {
-            id: 1,
-            file: '/images/news1.jpg',
-            index: 1,
-            font: 'Roboto',
-            color: '#ffffff',
-            number: '01',
-            titles: [
-              { id: 1, language: 1, label: 'Land Collateral Loan' },
-              { id: 2, language: 2, label: 'Хашаа барьцаалсан зээл' }
-            ],
-            subtitles: [
-              { id: 1, language: 1, label: 'Rate: 1.5% monthly' },
-              { id: 2, language: 2, label: 'Хүү: 1.5% сараар' },
-              { id: 3, language: 1, label: 'Duration: 36 months' },
-              { id: 4, language: 2, label: 'Хугацаа: 36 сар' }
-            ]
-          }
-        ])
+        console.error('Error fetching CTA slides:', err)
       } finally {
         setLoading(false)
       }
@@ -78,6 +59,26 @@ export default function AccordionSlider() {
   const getSubtitles = (subtitles: Translation[]) => {
     const langId = language === 'mn' ? 2 : 1
     return subtitles.filter(sub => sub.language === langId)
+  }
+
+  const getImageUrl = (slide: SlideData): string => {
+    if (slide.file_url) {
+      if (slide.file_url.startsWith('/')) {
+        const baseURL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://127.0.0.1:8000'
+        return `${baseURL}${slide.file_url}`
+      }
+      return slide.file_url
+    }
+    
+    if (slide.file) {
+      if (slide.file.startsWith('http')) {
+        return slide.file
+      }
+      const baseURL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://127.0.0.1:8000'
+      return `${baseURL}/${slide.file}`
+    }
+    
+    return '' // No image
   }
 
   useEffect(() => {
@@ -113,7 +114,7 @@ export default function AccordionSlider() {
     }
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
-  }, [active])
+  }, [active, slidesData.length])
 
   const nextSlide = () => {
     setActive((prev) => {
@@ -178,12 +179,16 @@ export default function AccordionSlider() {
         {slidesData.map((s, i) => {
           const title = getTranslation(s.titles)
           const subtitles = getSubtitles(s.subtitles)
+          const imageUrl = getImageUrl(s)
           
           return (
             <div
               key={s.id}
               className={`slide ${isMobile ? (active === i ? 'active' : '') : (hoveredSlide === i ? 'active' : '')}`}
-              style={{ backgroundImage: `url('${s.file}')` }}
+              style={{ 
+                backgroundImage: imageUrl ? `url('${imageUrl}')` : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                backgroundColor: imageUrl ? 'transparent' : '#667eea'
+              }}
               onMouseEnter={!isMobile ? () => setHoveredSlide(i) : undefined}
               onMouseLeave={!isMobile ? () => setHoveredSlide(-1) : undefined}
               onClick={(e) => handleSlideClick(i, e)}
@@ -198,7 +203,7 @@ export default function AccordionSlider() {
                 <div 
                   className="car-brand"
                   style={{ 
-                    fontFamily: s.font || 'inherit',
+                    fontFamily: s.font || 'Arial, sans-serif',
                     color: s.color && s.color !== '#' ? s.color : 'rgba(255,255,255,0.95)'
                   }}
                 >
